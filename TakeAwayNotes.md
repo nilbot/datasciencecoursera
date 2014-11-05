@@ -89,3 +89,31 @@ names(vect2)<-c("foo","bar","norf")
 vect2[c("foo","bar")] 
 ```
 
+### Matrices and Data Frames
+
+> matrices can carry only 1 class of data, data frames on the other hand, can contain many different classes
+
+```
+dim(my_vector) <- c(4,5)
+```
+
+* the above example shows that dim() can both get and ***set*** the dimension of a R object
+* and it will *transform* a 20 element vector into a 4x5 matrix. *hmm*...
+
+```
+class(my_vector) // yields "matrix"
+```
+
+the above example shows class() is like typeof()
+
+> The example that we've used so far was meant to illustrate the point that a matrix is simply an atomic vector with a dimension attribute. A more direct method of creating the same matrix uses the matrix() function.
+
+```
+cbind(a vector, b matrix) // a', b
+```
+
+```
+colnames(my_data) <- cnames // the same way dim() can be set
+```
+
+### Logic
