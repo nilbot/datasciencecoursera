@@ -8,6 +8,8 @@
     - [Vector](#vector)
     - [Missing Values](#missing-values)
     - [Subsetting Vectors](#subsetting-vectors)
+    - [Matrices and Data Frames](#matrices-and-data-frames)
+    - [Logic](#logic)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -45,7 +47,7 @@ char vector
 
 ```
 paste(input []char, collapse char) // collapse elements of input into one
-paste([...]char, sep char) // join ... []char into one 
+paste([...]char, sep char) // join ... []char into one
 paste([...]object, sep char) // join ... []object into one (element-wise) (and coerced into char type)
 ```
 
@@ -86,7 +88,7 @@ x[!is.na(x) & x > 0]
 
 ```
 names(vect2)<-c("foo","bar","norf")
-vect2[c("foo","bar")] 
+vect2[c("foo","bar")]
 ```
 
 ### Matrices and Data Frames
@@ -116,4 +118,36 @@ cbind(a vector, b matrix) // a', b
 colnames(my_data) <- cnames // the same way dim() can be set
 ```
 
+*Matrices default are filled up column, this implies the rows are observations, cols are variables.*
+
+
 ### Logic
+
+```
+! 5 == 7
+```
+will work as if `(5==7)`
+
+```
+which(ints>7) // where in c#
+```
+
+### lapply and sapply
+
+> *apply() offer a concise and convenient means of implementing the Split-Apply-Combine strategy analysis.
+
+> Each of the *apply functions will SPLIT up some data into smaller pieces, APPLY a function to each piece, then COMBINE the results. A more detailed discussion of this strategy is found in Hadley Wickham's Journal of Statistical Software paper titled 'The Split-Apply-Combine Strategy for Data Analysis'.
+
+```
+lapply(data,class)
+sapply(data,class)
+sum(data$orange) // Sum(Select(d->d.orange))
+```
+
+```
+lapply(unique_vals, function(elem) elem[2])
+```
+
+### vapply and tapply
+
+
