@@ -51,7 +51,6 @@ paste([...]char, sep char) // join ... []char into one
 paste([...]object, sep char) // join ... []object into one (element-wise) (and coerced into char type)
 ```
 
-
 ### Missing Values
 
 > Missing values play an important role in statistics and data analysis. Often, missing values must not be ignored, but rather they should be carefully studied to see if there's an underlying pattern or cause for their missingness.
@@ -84,6 +83,8 @@ x[!is.na(x) & x > 0]
 
 **My Answer** its just a vector of indices
 
+>Suppose I have a vector x <- c(17, 14, 4, 5, 13, 12, 10) and I want to set all elements of this vector that are greater than 10 to be equal to 4. I can use `x[x>10]<-4`
+
 **vectors of char strings** are just like map
 
 ```
@@ -111,7 +112,7 @@ the above example shows class() is like typeof()
 > The example that we've used so far was meant to illustrate the point that a matrix is simply an atomic vector with a dimension attribute. A more direct method of creating the same matrix uses the matrix() function.
 
 ```
-cbind(a vector, b matrix) // a', b
+cbind(a vector, b matrix) // a', b  //column bind
 ```
 
 ```
@@ -152,4 +153,51 @@ lapply(unique_vals, function(elem) elem[2])
 
 ### vapply and tapply
 
+vapply might stand for verbose apply: I need to specify the format I receive with the sapply
+
+`table(data$variable)`formats the sums of each variables through data
+
+> tapply Apply a function to each cell of a ragged array, that is to each (non-empty) group of values given by a unique combination of the levels of certain factors.
+
+```
+tapply(flags$population, flags$landmass, summary) // summary of populations of each of the landmasses
+```
+
+### Looking at Data
+
+```
+class(data)
+dim(data)
+nrow(data)
+ncol(data)
+names(data)
+head(data,10)
+tail(data,15)
+```
+
+
+### Simulation
+
+```
+flips <- sample(c(0,1),100,replace=TRUE,prob = c(0.3,0.7))
+sum(flips)
+```
+
+* `rbinom`
+* `rnorm`
+* `rpois`
+* `hist(colMeans(x))`
+
+
+### Dates and Times
+
+`unclass` to reveal whats internal of a variable
+
+* weekdays()
+* months()
+* quarters()
+
+`strptime(var, format="%B %Y ...")`
+
+arithmetic operations can be performed on dates and times ` >, <, -`. And `difftime(Sys.time(),t1,units='days')` gives me the diff.
 
