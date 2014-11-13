@@ -2,20 +2,25 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
-- [Take Away Notes](#take-away-notes)
-  - [Lessons from swirl R Programming](#lessons-from-swirl-r-programming)
+- [R Programming](#r-programming)
+  - [Lessons Notes from swirl R Programming](#lessons-notes-from-swirl-r-programming)
     - [Sequence](#sequence)
     - [Vector](#vector)
     - [Missing Values](#missing-values)
     - [Subsetting Vectors](#subsetting-vectors)
     - [Matrices and Data Frames](#matrices-and-data-frames)
     - [Logic](#logic)
+    - [lapply and sapply](#lapply-and-sapply)
+    - [vapply and tapply](#vapply-and-tapply)
+    - [Looking at Data](#looking-at-data)
+    - [Simulation](#simulation)
+    - [Dates and Times](#dates-and-times)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-#Take Away Notes
+# R Programming
 
-## Lessons from swirl R Programming
+## Lessons Notes from swirl R Programming
 
 ### Sequence
 
