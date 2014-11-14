@@ -9,8 +9,7 @@
 
 # RStudio files
 .Rproj.user/
+.Rproj.user
 
-# Homework Data Set
-hw*.csv
-data/
-specdata/
+# Homework (data sets and source codes are not to be commited)
+assignments/
