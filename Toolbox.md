@@ -74,3 +74,49 @@
   6.4 If the equations are known but the parameters are not, they may be inferred with data analysis
 
 These are ordered in ascending difficulty.
+
+### Data
+
+qualitative measurements like country of origin, sex
+quantitative measurements like height weight, blood pressure
+
+often the data will litmit or enable the question, hence question is more important than data.
+
+
+### Big Data
+
+they are so big they can't be analyzed on a local laptop computer. what the computer technology advancedment suggest is that over time there will be more powerful machine and our current reception of "big" data will become small.
+
+### Experimental Design
+
+Study design is important, analysis plan is important.
+
+Have a plan for data and code sharing. github.com & figshare.com (for large data) See [leek group data sharing plan]().
+
+Formulate the question in advance.
+
+Variability small --> sure
+
+Confounding pitfall.
+>example shoe size -> literacy, age is a confounder of shoe size and literacy.
+example: chocolate consumtion <-> nobel prize per capita
+
+you have to proof that they are not correlated
+
+ - solution for confounding : randomize  or  fix variable
+
+
+ - *prediction vs inference*
+
+ - *data dredging*
+
+Summary
+- Good experiments
+  - Have replication
+  - Measure variability
+  - Generailize to the problem you care about
+  - Are transparent
+- Prediction is not inference
+  - Both can be important
+- Beware data dredging
+
