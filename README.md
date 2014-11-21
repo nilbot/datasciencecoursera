@@ -6,6 +6,7 @@ Data Science Coursera
 
 * [Data Scientist's Toolbox](Toolbox.md)
 * [R Programming](R-Programming.md)
+* [Getting and Cleaning Data](GettingCleaningData.md)
 
 ## Useful stuff
 
