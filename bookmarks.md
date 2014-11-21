@@ -19,3 +19,4 @@
 ## Materials
 
 - [Mathematics Bootcamp for Biostatistics](https://github.com/bcaffo/Caffo-Coursera)
+- [Course Notes on Data Manipulation focused on R Prog](http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf)
