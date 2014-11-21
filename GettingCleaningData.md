@@ -38,8 +38,7 @@ The first step is to load data into a *data frame tbl*. (`tbl_df(R_Object)`)
     - to sort in ascending order, just speicify the variable like `arrange(data, var)`
     - the same for descending is `desc(var)`
     - multiple arguments will arrange from left to right, prioritized.
-  - the `mutate()` function will create a new variable based on the value of one
-  or more variables already in a dataset (we often want this)
+  - the `mutate()` function will create a new variable based on the value of one or more variables already in a dataset (we often want this)
     - `mutate(data, new_column = old_column * 3.14159)`
   - `summarize()` `// collapses the dataset to a single row`
     - for example `summarize(dataset, avg_size = mean(size))` will return a row called
