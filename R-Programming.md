@@ -206,3 +206,11 @@ sum(flips)
 
 arithmetic operations can be performed on dates and times ` >, <, -`. And `difftime(Sys.time(),t1,units='days')` gives me the diff.
 
+## Notes from the lecture videos
+
+### Week 4 Simulation
+
+> For every probability distribution functions there are 4 variables. the `r` random number generation, the `d` density function, the `p` cumulative distribution and the `q` quantile function
+
+quantile function also known as inversed cumulative distribution functions
+
