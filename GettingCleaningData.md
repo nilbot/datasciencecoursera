@@ -2,7 +2,7 @@
 
 ## Lessons Notes from swirl Programming
 
-> In this lession, you'll learn how to manipulate data using dplyr. (manipulate 
+> In this lession, you'll learn how to manipulate data using dplyr. (manipulate
 tabular data)
 
 _the techniques acquired from this swirl Programming session will help me dealing
@@ -10,13 +10,13 @@ with data types other than data frames, such as data tables, databases and multi
 dim arrays_
 
 First, I recapped on `read.csv` function, and I was exposed to a bool argument
-`stringsAsFactors = F`. At this moment, I don't know what it was for. 
+`stringsAsFactors = F`. At this moment, I don't know what it was for.
 
 It's a good habit to memorize several routines when it comes to getting data and
 cleaning data. Such as `head()` call, `dim()` call, and `str()` etc.
 
 There's also side notes about making sure you are using the right version of the
-library: 
+library:
 > `packageVersion("libraryName")`
 
 The first step is to load data into a *data frame tbl*. (`tbl_df(R_Object)`)
@@ -26,9 +26,9 @@ The first step is to load data into a *data frame tbl*. (`tbl_df(R_Object)`)
  `select()`, `filter()`, `arrange()`, `mutate()`, and `summarize()`.**
 
   - `select()` `// select columns`
-    - `select(df, variable1, variable2 ...)` I don't need to wrap `variable1` into 
+    - `select(df, variable1, variable2 ...)` I don't need to wrap `variable1` into
     a `""`, nor must I type `df$variable1`
-    - I can also use `:` operator to query a range of columns (variables) very 
+    - I can also use `:` operator to query a range of columns (variables) very
     quickly
     - and `-` will specify the negation I want in the selection
   - `filter()` `// select rows`
@@ -45,3 +45,28 @@ The first step is to load data into a *data frame tbl*. (`tbl_df(R_Object)`)
     `avg_size` (and its value, of course)
 
 > end of 1st session
+
+### session 2
+
+>At the top of the output above, you'll see 'Groups: package', which tells us that this tbl has been grouped by the package variable. Everything else looks the same, but now any operation we apply to the grouped data will take place on a per package basis.
+
+## Week 4 Video
+
+### Date
+
+the date formating string variables are
+  * %a weekdays
+  * %b month
+  * %d day
+  * %A un-abbr weekday
+  * %m 0-12 month
+  * %B un-abbr month
+  * %y 2-digit year
+  * %Y 4-digit year
+
+### Data Resources are very very interesting
+
+  * kaggle
+  * open gov data
+  *
+  > you have no excuse on not being able to find data for your project...
