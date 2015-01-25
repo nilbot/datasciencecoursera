@@ -1,0 +1,204 @@
+---
+title: "Regression Model Course Project"
+author: "Ersi Ni"
+date: "Jan 20. 2015"
+output: rmarkdown::tufte_handout
+---
+
+# Introduction
+
+This is the report to my hyperthetical work at *Motor Trend*, looking at the data of a collection of cars. This report delivers the analysis over whether Automatic Transmission or Manual Transmission is better for Miles Per Gallon.
+
+# Anlaysis
+
+```{r, echo=FALSE}
+library(datasets)
+data(mtcars)
+```
+
+A short description of what each variable means in the `mtcars` data set would act as a foreword for this report before we go into detailed analysis:
+
+  * mpg -> our outcome, miles per gallon
+  * cyl = numbers of cylinders
+  * disp = displacement
+  * hp = horse power
+  * wt = weight
+  * am = our predictor in question, transmission mode (0 for automatic, 1 for manual)
+  * gear = number of forward gear
+  * carb = number of carburetors
+
+
+First we look at the linear model for the outcome `mpg` from all predictor variables inside the data set `mtcars`, specifically we look at the coefficients of the linear model:
+
+```{r, echo = F, results='asis'}
+library(xtable)
+options(xtable.comment = FALSE)
+options(xtable.booktabs = TRUE)
+xtable(summary(lm(mpg~.,data=mtcars))$coefficients, caption = "P value of linear regression")
+```
+
+
+We noticed that the p value of the coefficients will give us clue as to how much the variable is a factor to the outcome `mpg`. Because the p-value tests the null hypothesis that the coefficient is equal to zero. A low (<0.05) p-value indicates that we can reject this null hypothesis, thus a meaningful variable to our model. Surprisingly our questioned `am` variable is not the lowest of them, but `am` is lower than most others. That means we need to dig deeper.
+
+To support the initial assumption that `am` is indeed a factor of `mpg` response,
+we can view the plot of transmission mode over `mpg`.
+
+```{r, echo=FALSE, fig.cap = "Transmission Mode on Miles per Gallon"}
+library(ggplot2)
+g <- ggplot(mtcars, aes(factor(am),mpg, fill=factor(am)))
+g = g +
+  geom_boxplot() +
+  geom_jitter(position = position_jitter(width = .1, height = 0)) +
+  scale_color_discrete(name = "Transmission Mode") +
+  scale_fill_discrete(name = "Transmission Mode", breaks = c("0", "1"), labels = c("Automatic", "Manual")) +
+  scale_x_discrete(breaks = c("0", "1"), labels = c("Automatic", "Manual")) +
+  xlab("")
+g
+
+```
+
+
+From the figure we can see the obvious difference in mean between 2 modes impacting on `mpg`.
+We make an hyperthesis test that Ho is `mpg` of manual is less than mpg of automatic, while Ha
+is `mpg` of manual is greater than mpg of automatic.
+
+```{r, echo=F}
+m1 <- subset(mtcars,mtcars$am==0)
+m2 <- subset(mtcars,mtcars$am==1)
+t.test(m1,m2,alternative="greater",paired=F)
+```
+
+*Now we can say manual transmission has better mpg performance.*
+
+# Quantify the MPG difference
+
+Going back to the first linear model we used at the begining, we know that that summary gives us a clue which variables might be thrown away because they don't appear to be a confounding factor. Step-wise model can deliver that.
+
+```{r}
+step_lm <- step(lm(data=mtcars, mpg ~ .), trace = 0)
+summary(step_lm)
+```
+
+The step model gives us 3 variables `wt`, `qsec` and `am` that can yield a better R-Sqaure. 
+
+Our goal is to find a model with least regressor and highest R-sqaure, the strategy here is comparing several models. To yield a significant difference, we can pick the original all variable model, a model with variables that are highly correlated, a model of `wt` alone and the step-wise model.
+
+The highest correlated variables are 
+```{r, echo=FALSE}
+head(names(sort(abs(round(cor(mtcars)[1,],2)),decreasing=T)))
+```
+So we have 
+
+1. `wt+qsec+am` model `r fit1 <- lm(data=mtcars, mpg~wt+qsec+am)`
+4. all variable model `r fit2 <- lm(data=mtcars, mpg~.)`
+3. `wt` model `r fit3 <- lm(data=mtcars, mpg~wt)`
+2. high correlated `wt+cyl+disp+hp` model `r fit4 <- lm(data=mtcars, mpg~wt+cyl+disp+hp)`
+
+Now we can compare them by using `anova`
+
+```{r}
+anova(fit1, fit2, fit3, fit4)
+```
+
+```{r, fig.margin=T}
+r1 <- resid(fit1)
+plot(r1, main="model wt+qsec+am")
+abline(h=0,lwd=2)
+```
+
+# Headings
+
+This style provides a- and b-heads (that is, `#` and `##`), demonstrated above.
+An error is emitted if you try to use `###` and smaller headings.
+
+\newthought{In his later books}[^books_be], Tufte starts each section with a bit of vertical space, a non-indented paragraph, and sets the first few words of the sentence in small caps. To accomplish this using this style, use the `\newthought` command as demonstrated at the beginning of this paragraph.
+
+# Figures
+
+## Margin Figures
+
+Images and graphics play an integral role in Tufte's work. To place figures or tables in the margin you can use the `fig.margin` knitr chunk option. For example:
+
+```{r, fig.margin = TRUE, fig.cap = "Sepal length vs. petal length, colored by species"}
+library(ggplot2)
+qplot(Sepal.Length, Petal.Length, data = iris, color = Species)
+```
+
+Note the use of the `fig.cap` chunk option to provide a figure caption. You can adjust the proportions of figures using the `fig.width` and `fig.height` chunk options. These are specified in inches, and will be automatically scaled down to fit within the handout margin.
+
+## Equations
+
+You can also include \LaTeX\ equations in the margin by explicitly invoking the `marginfigure` environment.
+
+\begin{marginfigure}
+$$\frac{d}{dx}\left( \int_{0}^{x} f(u)\,du\right)=f(x).$$
+\caption{An equation}
+\end{marginfigure}
+
+Note the use of the `\caption` command to add additional text below the equation.
+
+## Full Width Figures
+
+You can arrange for figures to span across the entire page by using the `fig.fullwidth` chunk option. 
+
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, fig.cap = "Full width figure"}
+qplot(wt, mpg, data=mtcars, colour=factor(cyl))
+```
+
+Note the use of the `fig.width` and `fig.height` chunk options to establish the proportions of the figure. Full width figures look much better if their height is minimized.
+
+## Main Column Figures
+
+Besides margin and full width figures, you can of course also include figures constrained to the main column.
+
+```{r, fig.cap = "Another figure"}
+qplot(factor(cyl), mpg, data = mtcars, geom = "boxplot")
+```
+
+# Sidenotes
+
+One of the most prominent and distinctive features of this style is the extensive use of sidenotes. There is a wide margin to provide ample room for sidenotes and small figures. Any use of a footnote will automatically be converted to a sidenote. ^[This is a sidenote that was entered using a footnote.] 
+
+If you'd like to place ancillary information in the margin without the sidenote mark (the superscript number), you can use the `\marginnote` command. \marginnote{This is a margin note.  Notice that there isn't a number preceding the note.}
+
+Note also that the two footnote references (`tufte_latex` and `books_be`, both defined below) were also included in the margin on the first page of this document.
+
+# Tables
+
+You can use the **xtable** package to format \LaTeX\ tables that integrate well with the rest of the Tufte handout style. Note that it's important to set the `xtable.comment` and `xtable.booktabs` options as shown below to ensure the table is formatted correctly for inclusion in the document.
+
+```{r, results='asis'}
+library(xtable)
+options(xtable.comment = FALSE)
+options(xtable.booktabs = TRUE)
+xtable(head(mtcars[,1:6]), caption = "First rows of mtcars")
+```
+
+
+```{r, echo=FALSE,eval=FALSE}
+dat <- mtcars[,c("mpg","wt","qsec","am")]
+fit <- lm(mpg ~ . - 1, data = dat)
+summary(fit)$coefficients
+
+pairs(dat, panel= panel.smooth, main="mtcars data")
+par(mfrow = c(2,2))
+plot(fit)
+sumCoef <- summary(fit)$coefficients
+interval <- sumCoef["am",1]+c(-1,1)*qt(0.975,df=fit$df)*sumCoef["am",2]
+interval
+
+```
+
+
+[^tufte_latex]: https://code.google.com/p/tufte-latex/
+[^books_be]: http://www.edwardtufte.com/tufte/books_be
+
+
+
+
+
+
+
+
+
+
