@@ -31,11 +31,14 @@ In this report the solution being developed is explained in 4 Sections: Getting 
 
 In this report the code is made reproducible that you can grab the R-Markdown file from the Github Repo and produce the same report you are reading right now. Libraries for R being used are `caret`, `randomForest`, `doMC`. Further, I chose seed `124`.
 
-```{r echo=FALSE}
+```{r}
 library(caret)
 library(randomForest)
-library(doMC)
-registerDoMC(cores = 4)
+library(doParallel)
+cl<-makeCluster(4)
+registerDoParallel(cl)
+# library(doMC)
+# registerDoMC(cores = 4)
 library(e1071)
 set.seed(124)
 ```
@@ -46,8 +49,8 @@ Getting data by downloading the two csv files and assign NA value to NA fields. 
 
 ```{r}
 naStrings<-c("NA","#DIV/0!","")
-download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", destfile = "pml-training.csv", method = "curl")
-download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", destfile = "pml-testing.csv", method = "curl")
+if(!file.exists("pml-training.csv")){download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", destfile = "pml-training.csv", method = "curl")}
+if(!file.exists("pml-testing.csv")){download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", destfile = "pml-testing.csv", method = "curl")}
 training <- read.csv("pml-training.csv", na.strings=naStrings, header = T)
 testing <- read.csv("pml-testing.csv", na.strings=naStrings, header = T)
 ```
@@ -149,4 +152,21 @@ oose<-predict(trial_rf, cv_test)
 1 - (sum(oose == cv_test$classe) / length(oose))
 ```
 
-Combined aboved statements, `random forest` delivers 99.6% accuracy and has an out of sample error of 0.26%.
+Combined aboved statements, `random forest` delivers 99.6% accuracy and has an out of sample error of 0.20%.
+
+### Submit with Autograder
+
+```{r}
+pml_write_files = function(x){
+n = length(x)
+for(i in 1:n){
+filename = paste0("problem_id_",i,".txt")
+write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+}
+}
+x <- testing
+
+answers <- predict(trial_rf, newdata=x)
+answers
+pml_write_files(answers)
+```
