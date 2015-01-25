@@ -29,7 +29,7 @@ https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
 
 In this report the solution being developed is explained in 4 Sections: Getting and Cleaning Data, Data Splitting and Cross Validation, Trial for Machine Learning Algorithms and finally the Final Model and its reasonings
 
-In this report the code is made reproducible that you can grab the R-Markdown file from the Github Repo and produce the same report you are reading right now. Libraries for R being used are `caret`, `randomForest`, `doMC`. Further, I chose seed `124`.
+In this report the code is made reproducible that you can grab the R-Markdown file from the Github Repo and produce the same report you are reading right now. Libraries for R being used are `caret`, `randomForest`, `doMC` or `doParallel`. Further, I chose seed `124`.
 
 ```{r}
 library(caret)
@@ -45,7 +45,7 @@ set.seed(124)
 
 ### Getting and Cleaning Data
 
-Getting data by downloading the two csv files and assign NA value to NA fields. There are these strings inside the data set indicating a missing value: `"#DIV/0!" "NA" ""`
+Getting data by downloading the two csv files and assign NA value to NA fields. Missing values are represented in these strings inside the data set: `"#DIV/0!" "NA" ""`
 
 ```{r}
 naStrings<-c("NA","#DIV/0!","")
@@ -65,7 +65,18 @@ I first define a function to let me see which column has how many non `NA` value
 HasValueCounts <- function(x) as.vector(apply(x,2,function(x) length(which(!is.na(x)))))
 ```
 
-Upon inspecting the summary of the result from the function I realized there are 2 major classes of variable which has non NA values: the one with all `19622` observations and the one with only `406` observations. I suspect that the `406` ones are the those observations with all variables fully recorded. After inspecting the data set my assumption was confirmed. But that created a fork in terms of finding a solution: either remove the non-full variables and develop solution based on rest of the variables or impute `NA` values based on the extremely limited `406` set and develop solutions that analyse on the imputed data set. I chose the former path and decided that more than `r (19622-406)/19622`% empty variable won't yield a strong predictor after all.
+
+Upon inspecting the summary of the result from the function I realized there are 2 major classes of variable which has non NA values: 
+
+
+```{r}
+summary(HasValueCounts(training))
+```
+
+
+The difference between 3rd Quantile and 1st Quantile is so large that it is unlikely the observations on `406` group will be a significant predictor of the outcome. Therefore I left them out.
+
+
 
 ```{r}
 colnames_goodColumns <- function(x) {
@@ -85,7 +96,9 @@ nzvIndex <- function(x){
 }
 ```
 
+
 I obtain the tidy set by running following self-defined function: I skipped the first 6 variables because they aren't interesting for predicting, removes non-full-record columns and examined near zero variability for the variables.
+
 
 ```{r}
 cleanDataSet <- function(x) {
@@ -107,6 +120,7 @@ testing <- cleanDataSet(testing)
 
 I sampled 60% of the training set to be my training set, on the rest 40% I built the cross-validation set. I then designate 1/4 of the cross validation set to be test set of the cross validation.
 
+
 ```{r}
 inTrain <- createDataPartition(training$classe, p = 0.6)[[1]]
 cv <- training[-inTrain,]
@@ -119,7 +133,7 @@ cv <- cv[inTrain,]
 
 ### Trial Machine Learning Algorithms
 
-On the exploratory analysis I chose **random forest** and **linear discriminant analysis** to attack the data set. Because the exploratory data plot shows significant difficulties for a linear solution.
+On the exploratory analysis I chose **random forest** and **linear discriminant analysis** to attack the data set. Because the exploratory data analysis reveals that the problem is non-linear.
 
 ```{r, cache=TRUE}
 trial_rf <- train(classe ~ ., data=training, method="rf")
@@ -142,7 +156,7 @@ confusionMatrix(pred_lda, cv$classe)
 
 ### Final Model and analysis
 
-Based on the confusion matrix results, I can assert that the random Forest yields better accuracy than LDA. 
+Based on the confusion matrix results, I can assert that the random Forest yields better accuracy than LDA. The accuracy of the *Random Forest* is near 99.6%.
 
 To deliver the **Out of sample error**, I calculate the predication on the `cv_test` set to get that figure, because I did't use cv_test to do my training.
 
@@ -169,4 +183,11 @@ x <- testing
 answers <- predict(trial_rf, newdata=x)
 answers
 pml_write_files(answers)
+```
+
+
+### Appendix: Plots of the model fit
+
+```{r}
+plot(trial_rf)
 ```
