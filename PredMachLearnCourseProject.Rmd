@@ -1,0 +1,152 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Ersi Ni"
+date: "January 24, 2015"
+output: html_document
+---
+
+This is the project report of the Practical Machine Learning Course Project on Coursera Course predmachlearn-010.
+
+### Introduction
+
+#### Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement  a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset)."
+
+#### Data
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. The information has been generously provided for use use in this cousera course by the authors, Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. They have allowed the use of their paper “Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ’13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+#### Abstract
+
+In this report the solution being developed is explained in 4 Sections: Getting and Cleaning Data, Data Splitting and Cross Validation, Trial for Machine Learning Algorithms and finally the Final Model and its reasonings
+
+In this report the code is made reproducible that you can grab the R-Markdown file from the Github Repo and produce the same report you are reading right now. Libraries for R being used are `caret`, `randomForest`, `doMC`. Further, I chose seed `124`.
+
+```{r echo=FALSE}
+library(caret)
+library(randomForest)
+library(doMC)
+registerDoMC(cores = 4)
+library(e1071)
+set.seed(124)
+```
+
+### Getting and Cleaning Data
+
+Getting data by downloading the two csv files and assign NA value to NA fields. There are these strings inside the data set indicating a missing value: `"#DIV/0!" "NA" ""`
+
+```{r}
+naStrings<-c("NA","#DIV/0!","")
+download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", destfile = "pml-training.csv", method = "curl")
+download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", destfile = "pml-testing.csv", method = "curl")
+training <- read.csv("pml-training.csv", na.strings=naStrings, header = T)
+testing <- read.csv("pml-testing.csv", na.strings=naStrings, header = T)
+```
+
+Here I present my understanding of the Raw data characteristics and how I clean them to fit my needs. 
+
+When inspecting the raw data with commands such as `summary(rawData)` or `nearZeroVar(rawData)` I realized that there are many columns composed with mostly `NA` values. Therefore the first step is to remove the `NA` values from the data. 
+
+I first define a function to let me see which column has how many non `NA` values. 
+
+```{r}
+HasValueCounts <- function(x) as.vector(apply(x,2,function(x) length(which(!is.na(x)))))
+```
+
+Upon inspecting the summary of the result from the function I realized there are 2 major classes of variable which has non NA values: the one with all `19622` observations and the one with only `406` observations. I suspect that the `406` ones are the those observations with all variables fully recorded. After inspecting the data set my assumption was confirmed. But that created a fork in terms of finding a solution: either remove the non-full variables and develop solution based on rest of the variables or impute `NA` values based on the extremely limited `406` set and develop solutions that analyse on the imputed data set. I chose the former path and decided that more than `r (19622-406)/19622`% empty variable won't yield a strong predictor after all.
+
+```{r}
+colnames_goodColumns <- function(x) {
+  cnts<-HasValueCounts(x)
+  drops<-c()
+  for(index in 1:length(cnts)){
+    if(cnts[index] < nrow(x)){
+      drops<-c(drops,index)
+    }
+  }
+  -drops
+}
+
+nzvIndex <- function(x){
+  nzvMatrix <- nearZeroVar(x, saveMetrics = T)
+  nzvMatrix$nzv==F
+}
+```
+
+I obtain the tidy set by running following self-defined function: I skipped the first 6 variables because they aren't interesting for predicting, removes non-full-record columns and examined near zero variability for the variables.
+
+```{r}
+cleanDataSet <- function(x) {
+  tr <- x[,6:dim(x)[2]]
+  keep <- colnames_goodColumns(tr)
+  tr <- tr[,keep]
+  nnzv <- nzvIndex(tr)
+  tr <- tr[,nnzv]
+  tr
+}
+
+training <- cleanDataSet(training)
+
+# testing set
+testing <- cleanDataSet(testing)
+```
+
+### Data splitting and cross validation
+
+I sampled 60% of the training set to be my training set, on the rest 40% I built the cross-validation set. I then designate 1/4 of the cross validation set to be test set of the cross validation.
+
+```{r}
+inTrain <- createDataPartition(training$classe, p = 0.6)[[1]]
+cv <- training[-inTrain,]
+training <- training[ inTrain,]
+inTrain <- createDataPartition(cv$classe, p = 0.75)[[1]]
+cv_test <- cv[ -inTrain,]
+cv <- cv[inTrain,]
+```
+
+
+### Trial Machine Learning Algorithms
+
+On the exploratory analysis I chose **random forest** and **linear discriminant analysis** to attack the data set. Because the exploratory data plot shows significant difficulties for a linear solution.
+
+```{r, cache=TRUE}
+trial_rf <- train(classe ~ ., data=training, method="rf")
+trial_lda <- train(classe ~ ., data=training, method="lda")
+```
+
+Running predictions on cross validation set
+
+```{r}
+pred_rf <- predict(trial_rf, cv)
+pred_lda <- predict(trial_lda, cv)
+```
+
+Showing confusion matrix on cross validation set
+```{r}
+confusionMatrix(pred_rf, cv$classe)
+confusionMatrix(pred_lda, cv$classe)
+```
+
+
+### Final Model and analysis
+
+Based on the confusion matrix results, I can assert that the random Forest yields better accuracy than LDA. 
+
+To deliver the **Out of sample error**, I calculate the predication on the `cv_test` set to get that figure, because I did't use cv_test to do my training.
+
+```{r}
+oose<-predict(trial_rf, cv_test)
+
+1 - (sum(oose == cv_test$classe) / length(oose))
+```
+
+Combined aboved statements, `random forest` delivers 99.6% accuracy and has an out of sample error of 0.26%.
