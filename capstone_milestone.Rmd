@@ -1,0 +1,219 @@
+---
+title: "Data Science Track SwiftKey Capstone Milestone Report"
+author: "Ersi Ni"
+date: "Sunday, March 29, 2015"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+## Executive Summary
+
+The Data Science Track SwiftKey Capstone Project in short is to design and implement a prediction algorithm for the natural language (English) text: when given a phrase of English text, predict the next word for the phrase. In this milestone report we present the descriptive and exploratory analysis of the text data, with the goal of gaining insight and exploring options for the next phase of the project. 
+
+## Notes for reproducing results presented in this report
+
+The R code in this report is written in Windows environment and can be reproduced in a natural reading order, with necessary libraries installed and loaded. Below are the utilized libraries. 
+
+```{r lib}
+library(tm)
+library(qdap)
+library(RWeka)
+library(wordcloud)
+```
+
+Readers using Nix related platforms may need to pay attention to the path delimiters, line-breaks etc. due to the differences between the Systems, but apart from these trivial technicalities, the result is easily reproducible.
+
+## Descriptive Analysis and Exploration of the Data
+
+### Source 
+
+The raw data is collected from http://www.corpora.heliohost.org/, which consists of U.S. news, blogs, and twitter text (in this project, English language) data sets. The Course provided a simply link for the download at Coursera Site [Capstone Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip)
+
+After downloading and unzipping the data, we can perform loading. In this report the data are stored in E: drive as the code below illustrates.
+
+```{r}
+# file name of the data
+files.blogs <- "E:\\Coursera-SwiftKey\\final\\en_US\\en_US.blogs.txt"
+files.twitter <- "E:\\Coursera-SwiftKey\\final\\en_US\\en_US.twitter.txt"
+files.news <- "E:\\Coursera-SwiftKey\\final\\en_US\\en_US.news.txt"
+
+files.small_def <- 256 # for quick browsing, take 256 lines of data
+```
+
+## Observations
+
+The size of the data is not small, loading 3 data files into the memory alone will consume around 600MB.
+
+```{r}
+file.info(files.blogs)$size + file.info(files.news)$size + file.info(files.news)$size # total size in bytes
+```
+
+And the number of lines in each text file:
+
+```{r}
+system(paste("wc -l",files.blogs))   #899288 lines
+system(paste("wc -l",files.news))    #1010242 lines
+system(paste("wc -l",files.twitter)) #2360148 lines
+```
+
+We can pick a small set of the data and start processing
+
+```{r}
+# small data set
+sb <- readLines(file(files.blogs,"r"),encoding = "UTF-8", files.small_def)
+sn <- readLines(file(files.news,"r"),encoding = "UTF-8", files.small_def)
+st <- readLines(file(files.twitter,"r"),encoding = "UTF-8", files.small_def)
+small <- paste(st, sn,sb)
+rm(list=c("sb","sn","st"))
+small <- sent_detect(small, language = "en", model = NULL) #qdap::sentence split
+```
+
+Adopting “Hands-On Data Science with R - Text Mining” by Graham Williams. [TextMiningO][1] we should remove punctuation and extra white spaces, and convert upper cases to lower:
+
+```{r}
+scorpus <- VCorpus(VectorSource(small)) # building corpus
+
+scorpus <- tm_map(scorpus, stripWhitespace) # removing whitespaces
+scorpus <- tm_map(scorpus, content_transformer(tolower)) #lowercasing all contents
+scorpus <- tm_map(scorpus, removePunctuation) # removing special characters
+scorpus <- tm_map(scorpus, removeWords, stopwords("english"))
+```
+
+
+If we were to just remove profanity now, we can match the source text against a profanity list and remove those occurrences.
+
+```{r}
+# if we were to remove profanity, we first grab a list of profane words
+profanity <- "http://github.com/shutterstock/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/raw/master/en"
+workaround <- file("E:\\Coursera-SwiftKey\\final\\en_US\\en_US.profanity.txt","r")
+banned <- VectorSource(readLines(workaround,encoding = "UTF-8"))
+close(workaround)
+
+scorpus.cleaned <- tm_map(scorpus, removeWords, banned) # simply remove occurances of those profanities
+```
+
+The approach of simply removing these profanities will potentially impact the accuracy of the prediction, if we train our model based on censored data source. Instead, a better solution would be censor the result at last minute, by substituting profane with something like "#!@%". 
+
+Now we can use word cloud to visualize the content
+
+```{r}
+# term document matrix
+scorpus.cleaned<-tm_map(scorpus.cleaned, PlainTextDocument)
+tdm <-TermDocumentMatrix(scorpus.cleaned)
+
+tmatrix <- as.matrix(tdm) # marshal as matrix
+
+set.seed(124) # setting pseudo random seed
+
+# fancy display
+wordcloud(rownames(tmatrix),rowSums(tmatrix),min.freq=1, max.words=200,colors=brewer.pal(6,"Dark2"))
+
+```
+
+
+### Building Term Frequency Table for further visualisation
+
+For now we use only the news data set and create a subset of it for our analysis.
+
+```{r}
+f <- file(files.news, "rb")
+original.news <- readLines(f)
+close(f)
+
+set.seed(124)
+news.sample <- sample(original.news, length(original.news)*0.05) # take only 5%, around 50 thousands lines
+
+record.length <- data.frame(character=nchar(news.sample), word=sapply(strsplit(news.sample, " "), length))
+```
+
+The news text data contains long sentences and may contain multiple sentences before a line break. Following plots may illustrates the word statistics for each line.
+
+```{r fig.cap="Record Length by Word"}
+ggplot(record.length, aes(x=word)) +
+  geom_bar(stat="bin", binwidth=5) +
+  theme_bw() +
+  ggtitle("Record Length by Word")
+```
+
+Next we build the corpus for the sampled news data, similarly as previous attempt, we remove extra white-spaces and punctuation. 
+
+```{r}
+news.corpus <- VCorpus(VectorSource(news.sample))
+toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+news.corpus<- tm_map(news.corpus, toSpace, "/|@|\\|")
+news.corpus <- tm_map(news.corpus, stripWhitespace) # removing whitespaces
+news.corpus <- tm_map(news.corpus, content_transformer(tolower)) # in the news set tolower returns characters for some cases instead of textdocument
+news.corpus <- tm_map(news.corpus, removePunctuation) # removing special characters
+news.corpus <- tm_map(news.corpus, removeWords, stopwords("english"))
+```
+
+Using a term-document matrix (TDM) we can assert the frequency of terms that occur in a collection of text, in our case, the corpus.
+
+```{r}
+news.dtm <- DocumentTermMatrix(news.corpus) %>% removeSparseTerms(0.9999)
+```
+
+Finally we obtain the 2-gram and 3-gram by calling
+
+```{r}
+BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
+news.dtm.2g <- DocumentTermMatrix(news.corpus, control=list(tokenize = BigramTokenizer)) %>% removeSparseTerms(0.9999)
+
+TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
+news.dtm.3g <- DocumentTermMatrix(news.corpus, control=list(tokenize = TrigramTokenizer)) %>% removeSparseTerms(0.9999)
+
+```
+
+### Visualizing ###
+
+```{r freq}
+most.freq <- function(dtm, n=10){
+  freq <- slam::col_sums(dtm, na.rm = T)
+  result <- freq[order(freq, decreasing=TRUE)][1:n]
+  return(data.frame(term=names(result), count=result))
+}
+```
+
+```{r fig.cap="top 10 words in news"}
+ggplot(most.freq(news.dtm), aes(x=reorder(term, -count), y=count)) +
+  geom_bar(stat="identity") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  ggtitle("top 10 words in news")
+
+```
+
+```{r fig.cap="top 10 2-gram in news"}
+ggplot(most.freq(news.dtm.2g), aes(x=reorder(term, -count), y=count)) +
+  geom_bar(stat="identity") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+           axis.text.x  = element_text(angle=45, hjust=1)) +
+  ggtitle("top 10 2-gram in news")
+```
+
+```{r fig.cap="top 10 3-gram in news"}
+ggplot(most.freq(news.dtm.3g), aes(x=reorder(term, -count), y=count)) +
+  geom_bar(stat="identity") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+           axis.text.x  = element_text(angle=45, hjust=1)) +
+  ggtitle("top 10 3-gram in news")
+```
+
+## Roadmap for Modelling and prediction
+
+From the exploration we can see the significance of frequency of the words. 2 and 3-grams have shown some sense that certain words combinations do make more sense than other combinations, and the frequency of those reflected somehow the "natural" usage of the phrases. There might be a strong underlying model that based around concepts like word/n gram frequency, with which we can simulate a natural sentence artificially. But we need more explorations on bigger data to decide which model is optimal.
+
+General strategies in machine learning also suggest that combining different predictive models would yield a robust solution. An interactive data product that allowing users to choose different approach and compare results would be preferable.
+
+## Footnotes
+
+The source code of the exploration (R) and this Rmd document can be accessed from [GitHub](https://github.com/nilbot/datasciencecoursera). Pull requests are welcome.
+
+
+
+[1]:http://handsondatascience.com/TextMiningO.pdf
